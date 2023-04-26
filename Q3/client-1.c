@@ -37,18 +37,6 @@ void server_connection(int *client_socket, struct sockaddr_in *server_address)
     }
 }
 
-int parse_input(char *buffer)
-{
-    if (buffer[0] == 'c' && buffer[1] == 'l' && buffer[2] == 'i' && buffer[3] == 'e' && buffer[4] == 'n' && buffer[5] == 't' && buffer[6] == '-' && buffer[7] == '1' && buffer[8] == ':')
-    {
-
-        return 1;
-    }
-    else
-    {
-        return 0;
-    }
-}
 int main()
 {
 
@@ -57,7 +45,7 @@ int main()
 
         int client_socket;
         struct sockaddr_in server_address;
-        char buffer[1024];
+        char buffer[2048];
 
         client_socket_init(&client_socket);
 
@@ -75,7 +63,7 @@ int main()
             break;
         }
 
-        char client_message[1024];
+        char client_message[2048];
 
         sprintf(client_message, "client-1:");
         strcat(client_message, buffer);
@@ -96,13 +84,13 @@ int main()
 
         // Receive data from the server
 
-        if (recv(client_socket, client_message, 1024, 0) > 0)
+        if (recv(client_socket, client_message, 2048, 0) > 0)
         {
             printf("Data received from the server: %s \n", buffer);
         }
         else
         {
-            printf("Error: Failed to receive data from server \n");
+            printf("Invalid Input Format \n");
         }
 
         // Printing the output and closing the connection

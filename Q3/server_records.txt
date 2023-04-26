@@ -1,0 +1,4 @@
+
+Client 1 || Expression :                    9 788.986 *  || Answer : 7100.874023 || Time_elapsed : 0.000006 ||
+Client 1 || Expression :                          9 8 -  || Answer : 1.000000 || Time_elapsed : 0.000007 ||
+Client 1 || Expression :                  3456 987654 /  || Answer : 0.003499 || Time_elapsed : 0.000007 ||

@@ -147,22 +147,25 @@ float evaluate_postfix_expression(char *expression)
 int client_expression_func(int client_socket)
 {
 
-    char buffer[1024];
-    bzero(buffer, 1024);
+    char buffer[2048];
+    bzero(buffer, 2048);
 
     // Receiving request from client
 
-    char *client_expression;
+    char client_expression[2048];
     int client_id;
 
-    if (recv(client_socket, buffer, 1024, 0) >= 0)
+    if (recv(client_socket, buffer, 2048, 0) >= 0)
     {
 
         char *str = strstr(buffer, "-");
         client_id = str[1] - '0';
 
+        // Find the first occurrence of ':' character
         char *delimiter = strchr(buffer, ':');
-        client_expression = delimiter + 1;
+
+        // Copy the message after ':' character into a new character array
+        strncpy(client_expression, delimiter + 1, 2048);
         printf("Received message: %s\n", client_expression);
     }
     else
@@ -171,7 +174,7 @@ int client_expression_func(int client_socket)
         return -1;
     }
 
-    char client_message[1024];
+    char client_message[2048];
 
     clock_t start_time = clock();
     float answer = evaluate_postfix_expression(client_expression);
@@ -187,12 +190,12 @@ int client_expression_func(int client_socket)
     if (write_records != -1)
     {
 
-        char query_record[2048];
-        sprintf(query_record, "\nClient %d Expression : %s", client_id, client_expression);
+        char query_record[4096];
+        sprintf(query_record, "\nClient %d || Expression : %30s  ||", client_id, client_expression);
         write(write_records, query_record, strlen(query_record));
 
-        char exec_record[2048];
-        sprintf(exec_record, " Answer : %f Time_elapsed : %f", answer, time_taken);
+        char exec_record[4096];
+        sprintf(exec_record, " Answer : %f || Time_elapsed : %f ||", answer, time_taken);
         write(write_records, exec_record, strlen(exec_record));
 
         close(write_records);
@@ -215,7 +218,7 @@ int client_expression_func(int client_socket)
         return -1;
     }
 
-    bzero(buffer, 1024);
+    bzero(buffer, 2048);
     return 0;
 }
 
@@ -253,11 +256,11 @@ void server_socket_create(int *server_socket)
 int handle_auth()
 {
     printf("Enter user_id : ");
-    char user_id[1024];
+    char user_id[2048];
     scanf("%s", user_id);
 
     printf("Enter password : ");
-    char password[1024];
+    char password[2048];
     scanf("%s", password);
 
     if (strcmp(user_id, "admin") != 0 || strcmp(password, "password") != 0)
