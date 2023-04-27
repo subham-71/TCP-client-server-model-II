@@ -7,6 +7,9 @@ import threading
 HOST = "127.0.0.1"
 PORT = 8080
 
+import secrets
+SECRET = secrets.token_hex(16)
+
 # Dictionary to store usernames and passwords
 
 USERS = {}
@@ -23,6 +26,7 @@ ACTIVE_USERS = {}
 # Dictionary to which user is in which chat room
 
 USERS_CHAT_ROOM = {}
+
 
 
 # Class to represent a chat room
@@ -255,6 +259,7 @@ class ClientThread(threading.Thread):
                 # Close the self.connection
                 self.connection.close()
                 return -1
+            
             elif message == "NO_INPUT 8f9e1d6c5b4a32":
                 continue
 
@@ -281,17 +286,16 @@ class ClientThread(threading.Thread):
 
     def handle_client(self):
 
-        # Get username
-        username = self.handleAuth()
+        # # Send secret 
+        # self.connection.send(SECRET.encode())
+
+        # Handle the authentication
+        self.handleAuth()
+
+        # Handle the user
+        return self.handle_user()
 
         
-        # Handle the user
-        x = self.handle_user()
-
-
-        if (x == -1):
-            # self.connection.close()
-            return -1
 
     def run(self):
         print("Connection from : ", self.address)

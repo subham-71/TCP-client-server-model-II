@@ -4,8 +4,7 @@ import time
 
 SERVER = "127.0.0.1"
 PORT = 8080
-
-token = ""
+SECRET = ""
 
 
 class Client:
@@ -92,11 +91,7 @@ class Client:
         print(f"{self.username}: ")
 
         user_input = input()
-        if (user_input == "/leave "):
-            self.client_socket.send(user_input.encode())
-            return -1
-
-        elif (user_input == "/logout "):
+        if (user_input == "/leave"):
             self.client_socket.send(user_input.encode())
             return -1
 
@@ -112,7 +107,7 @@ class Client:
 
     def handleChat(self):
         
-        user_input = input("Enter 1 to send a message :  2 to receive messages: ")
+        user_input = input("Enter choice : ")
         if (user_input == "1"):
             return self.send_message()
         elif (user_input == "2"):
@@ -149,10 +144,13 @@ class Client:
           
                     print("\n"+server_message+"\n")
                     print("=================================== \nWelcome to the Chat Room. Press \n1. to send a message \n2. to receive messages \n =========================== \n While sending messages, You have the following commands \n  1. /leave : to leave the chatroom \n  2. /logout : to logout and exit \n===================================\n\n")
+                    self.line_no = -1
 
                     while (1):
 
                         x = self.handleChat()
+                        print("X : ",x)
+
                         if (x == -1):
                             break
 
@@ -174,6 +172,8 @@ class Client:
                     print("\n"+server_message+"\n")
                 
                     print("\n\n=================================== \nWelcome to the Chat Room. Press \n1. to send a message \n2. to receive messages \n =========================== \n While sending messages, You have the following commands \n  1. /leave : to leave the chatroom \n  2. /logout : to logout and exit \n===================================\n\n")
+                    self.line_no = -1
+
                     while (1):
 
                         x = self.handleChat()
@@ -182,6 +182,13 @@ class Client:
 
             # Logout
             elif (user_input == "3"):
+
+                logout_message = "/logout " 
+                self.client_socket.send(logout_message.encode())
+
+                server_message = self.client_socket.recv(1024).decode()
+                print("\n"+server_message+"\n")
+
                 print("Logging out...")
                 break
 
@@ -193,7 +200,7 @@ class Client:
     def client_program(self):
 
         while (1):
-
+            
             x = self.handleAuth()
 
             if x == -1:
