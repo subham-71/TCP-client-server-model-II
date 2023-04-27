@@ -1,8 +1,0 @@
-[SYSTEM][22:23:48]: admin has created the chat room.
-[SYSTEM][22:24:13]: admin : Hi! 
-[SYSTEM][22:24:35]: admin : Hi again! 
-[SYSTEM][22:24:43]: admin has left the chat room.
-[SYSTEM][22:25:14]: admin has joined the chat room.
-[SYSTEM][22:26:50]: admin has left the chat room.
-[SYSTEM][22:27:04]: admin has joined the chat room.
-[SYSTEM][22:27:07]: admin has left the chat room.

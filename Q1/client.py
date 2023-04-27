@@ -1,6 +1,7 @@
 import socket
 import time
 
+
 class Client:
     def __init__(self, file_path):
 
@@ -31,7 +32,8 @@ class Client:
         print("============================ \n File sent to server \n ============================")
         self.client_socket.close()
 
+
 if __name__ == "__main__":
 
-    client = Client("server.py")
+    client = Client("client_file.txt")
     client.send_file()

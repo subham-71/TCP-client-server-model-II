@@ -4,8 +4,7 @@ import time
 
 SERVER = "127.0.0.1"
 PORT = 8080
-
-token = ""
+SECRET = ""
 
 
 class Client:
@@ -89,14 +88,10 @@ class Client:
                     self.line_no = i
 
     def send_message(self):
-        print(f"{self.username}: ")
 
-        user_input = input()
-        if (user_input == "/leave "):
-            self.client_socket.send(user_input.encode())
-            return -1
+        user_input = input(f"{self.username} : ")
 
-        elif (user_input == "/logout "):
+        if (user_input == "/leave"):
             self.client_socket.send(user_input.encode())
             return -1
 
@@ -112,8 +107,7 @@ class Client:
 
     def handleChat(self):
 
-        user_input = input(
-            "Enter 1 to send a message :  2 to receive messages: ")
+        user_input = input("Enter choice : ")
         if (user_input == "1"):
             return self.send_message()
         elif (user_input == "2"):
@@ -132,7 +126,7 @@ class Client:
             print("\n"+active_chat_rooms_users+"\n")
 
             # Get the user input
-            user_input = input()
+            user_input = input("Enter Choice : ")
 
             # Join a chat room
             if (user_input == "1"):
@@ -144,16 +138,18 @@ class Client:
                 server_message = self.client_socket.recv(1024).decode()
                 if (server_message == f"[SYSTEM]: Chat room {self.chat_room_name} does not exist."):
                     print(server_message)
-                    self.client_socket.send("NO_INPUT 8f9e1d6c5b4a32".encode())
+                    self.client_socket.send(SECRET.encode())
                     continue
                 else:
 
                     print("\n"+server_message+"\n")
-                    print("=================================== \nWelcome to the Chat Room. Press \n1. to send a message \n2. to receive messages \n =========================== \n While sending messages, You have the following commands \n  1. /leave : to leave the chatroom \n  2. /logout : to logout and exit \n===================================\n\n")
+                    print("=================================== \nWelcome to the Chat Room. Press \n1. to send a message \n2. to receive messages \n    =========================== \n    While sending messages, You have the following command \n      /leave : to leave the chatroom \n ==================================\n\n")
+                    self.line_no = -1
 
                     while (1):
 
                         x = self.handleChat()
+
                         if (x == -1):
                             break
 
@@ -166,17 +162,18 @@ class Client:
 
                 server_message = self.client_socket.recv(1024).decode()
                 print("\n"+server_message+"\n")
-                if (server_message == f"[SYSTEM]: Chat room {self.chat_room_name} does not exist."):
+                if (server_message == f"[SYSTEM]: Chat room {self.chat_room_name} already exists. Please join it."):
                     print("\n"+server_message+"\n")
-                    self.client_socket.send("NO_INPUT 8f9e1d6c5b4a32".encode())
+                    self.client_socket.send(SECRET.encode())
                     continue
+
                 else:
-                    print(
-                        "=============================================================")
+
                     print("\n"+server_message+"\n")
-                    print(
-                        "=============================================================")
-                    print("=================================== \nWelcome to the Chat Room. Press \n1. to send a message \n2. to receive messages \n =========================== \n While sending messages, You have the following commands \n  1. /leave : to leave the chatroom \n  2. /logout : to logout and exit \n===================================\n\n")
+
+                    print("=================================== \nWelcome to the Chat Room. Press \n1. to send a message \n2. to receive messages \n    =========================== \n    While sending messages, You have the following command \n      /leave : to leave the chatroom \n ==================================\n\n")
+                    self.line_no = -1
+
                     while (1):
 
                         x = self.handleChat()
@@ -185,15 +182,25 @@ class Client:
 
             # Logout
             elif (user_input == "3"):
+
+                logout_message = "/logout "
+                self.client_socket.send(logout_message.encode())
+
+                server_message = self.client_socket.recv(1024).decode()
+                print("\n"+server_message+"\n")
+
                 print("Logging out...")
                 break
 
             else:
                 print("Invalid choice")
-                self.client_socket.send("NO_INPUT 8f9e1d6c5b4a32".encode())
+                self.client_socket.send(SECRET.encode())
                 continue
 
     def client_program(self):
+
+        # receive SECRET
+        SECRET = self.client_socket.recv(1024).decode()
 
         while (1):
 

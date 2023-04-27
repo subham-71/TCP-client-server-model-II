@@ -13,7 +13,6 @@ SECRET = secrets.token_hex(16)
 # Dictionary to store usernames and passwords
 
 USERS = {}
-USERS['admin'] = 'admin'
 
 # Dictionary to store chat rooms
 
@@ -68,37 +67,38 @@ class ClientThread(threading.Thread):
         self.username = self.connection.recv(1024).decode()
         password = self.connection.recv(1024).decode()
 
-        if self.username in USERS:
-            if password == USERS[self.username]:
-                self.connection.send('[SYSTEM] :Login successful!'.encode())
-                return 1
-            else:
-                self.connection.send(
-                    '[SYSTEM] :Incorrect password!'.encode())
-                return -1
+        if len(USERS) != 0:
 
-        else:
-            self.connection.send('User not registered!'.encode())
-            return -1
+            if self.username in USERS:
+                if password == USERS[self.username]:
+                    self.connection.send('[SYSTEM] :Login successful!'.encode())
+                    return 1
+                else:
+                    self.connection.send(
+                        '[SYSTEM] :Incorrect password!'.encode())
+                    return -1
 
-        return False
+        self.connection.send('User not registered!'.encode())
+        return -1
+
 
     def signup(self):
 
         self.username = self.connection.recv(1024).decode()
 
-        if self.username in USERS:
-            self.connection.send('[SYSTEM] :Username already exists!'.encode())
-            return -1
-        else:
-            self.connection.send('[SYSTEM] :Enter Password : '.encode())
+        if len(USERS) != 0:
+            if self.username in USERS:
+                self.connection.send('[SYSTEM] :Username already exists!'.encode())
+                return -1
+        
+        self.connection.send('[SYSTEM] :Enter Password : '.encode())
 
-            password = self.connection.recv(1024).decode()
-            USERS[self.username] = password
-            self.connection.send(
-                '[SYSTEM] :User registered successfully!'.encode())
-            print(f'{self.username} registered successfully!')
-            return 1
+        password = self.connection.recv(1024).decode()
+        USERS[self.username] = password
+        self.connection.send(
+            '[SYSTEM] :User registered successfully!'.encode())
+        print(f'{self.username} registered successfully!')
+        return 1
 
     def handleAuth(self):
 
@@ -162,8 +162,8 @@ class ClientThread(threading.Thread):
                     # Send a message to the client
                     self.connection.send(
                         f"[SYSTEM]: Chat room {chat_room_name} already exists. Please join it.".encode())
-                    return 
-                
+                    return
+
         # Create a new chat room
         chat_room = ChatRoom(
             chat_room_name, self.username)
@@ -185,7 +185,6 @@ class ClientThread(threading.Thread):
         # Send a message to the client
         self.connection.send(
             f"[SYSTEM]: You have created the chat room \"{chat_room_name}\" ".encode())
-            
 
     def leave_chat_room(self, chat_room):
 
@@ -204,7 +203,7 @@ class ClientThread(threading.Thread):
     def handle_user(self):
 
         while (1):
-            
+
             # Send list of chat rooms to the client
             chat_room_list = [chat_room.name for chat_room in CHAT_ROOMS]
             self.connection.send(
@@ -242,12 +241,15 @@ class ClientThread(threading.Thread):
                         self.leave_chat_room(chat_room)
 
             elif message.startswith('/logout'):
-                chat_room_name = USERS_CHAT_ROOM[self.username]
 
-                # Find the chat room
-                for chat_room in CHAT_ROOMS:
-                    if chat_room.name == chat_room_name:
-                        self.leave_chat_room(chat_room)
+                if self.username in USERS_CHAT_ROOM:
+
+                    chat_room_name = USERS_CHAT_ROOM[self.username]
+
+                    # Find the chat room
+                    for chat_room in CHAT_ROOMS:
+                        if chat_room.name == chat_room_name:
+                            self.leave_chat_room(chat_room)
 
                 # Remove the user from the active users
                 ACTIVE_USERS.pop(self.username)
@@ -259,8 +261,8 @@ class ClientThread(threading.Thread):
                 # Close the self.connection
                 self.connection.close()
                 return -1
-            
-            elif message == "NO_INPUT 8f9e1d6c5b4a32":
+
+            elif message == SECRET:
                 continue
 
             else:
@@ -281,13 +283,13 @@ class ClientThread(threading.Thread):
                             # Send the message to the chat room
                             chat_room.send_message(
                                 room_message)
-                            
+
             
 
     def handle_client(self):
 
-        # # Send secret 
-        # self.connection.send(SECRET.encode())
+        # Send secret 
+        self.connection.send(SECRET.encode())
 
         # Handle the authentication
         self.handleAuth()
@@ -308,6 +310,8 @@ if __name__ == "__main__":
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     server.bind((HOST, PORT))
+
+
     print("Server started on port : ", PORT)
     print("Waiting for client request..")
 
