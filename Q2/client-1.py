@@ -31,12 +31,12 @@ class Client:
         # Receive acknowledgement from the server
         server_message = self.client_socket.recv(1024).decode()
 
-        if server_message == "Login successful!":
+        if server_message == "[SYSTEM] :Login successful!":
             self.username = username
-            print("\n\n [SYSTEM] : " + server_message + "\n\n")
+            print("\n"+server_message+"\n")
             return 1
         else:
-            print(server_message)
+            print("\n"+server_message+"\n")
             return -1
 
     def signup(self):
@@ -48,19 +48,18 @@ class Client:
 
         # Get server message
         server_message = self.client_socket.recv(1024).decode()
-        if (server_message == "Username already exists!"):
-            print("\n\n [SYSTEM] : " + server_message + "\n\n")
+        if (server_message == "[SYSTEM] :Username already exists!"):
+            print("\n"+server_message+"\n")
             return -1
         else:
-            print("Username accepted!")
             # Get the password from the user
             password = input('Enter password: ')
             self.client_socket.send(password.encode())
 
             server_message = self.client_socket.recv(1024).decode()
-            if (server_message == "User registered successfully!"):
+            if (server_message == "[USER] :User registered successfully!"):
                 self.username = username
-                print("\n\n [SYSTEM] : " + server_message + "\n\n")
+                print("\n"+server_message+"\n")
                 return 1
 
     def handleAuth(self):
@@ -104,17 +103,16 @@ class Client:
         else:
             self.client_socket.send(user_input.encode())
             server_message = self.client_socket.recv(1024).decode()
-            if (server_message == "[System]: You are not in any chat room."):
-                print("\n\n [SYSTEM] : " + server_message + "\n\n")
+            if (server_message == "[SYSTEM]: You are not in any chat room."):
+                print("\n"+server_message+"\n")
                 return -1
             else:
-                print("\n\n [SYSTEM] : " + server_message + "\n\n")
+                print("\n"+server_message+"\n")
                 return 1
 
     def handleChat(self):
         
-
-        user_input = input("Enter your choice: ")
+        user_input = input("Enter 1 to send a message :  2 to receive messages: ")
         if (user_input == "1"):
             return self.send_message()
         elif (user_input == "2"):
@@ -127,13 +125,13 @@ class Client:
             print("=================================== \nWelcome to the Chat Room. Press \n1. Join a chat room \n2. Create a chat room \n3. Logout \n===================================")
 
             # Receive list of active chat rooms from server
-            active_chat_rooms = self.client_socket.recv(1024).decode()
+            active_chat_rooms_users = self.client_socket.recv(1024).decode()
 
             # Print the list of active chat rooms
-            print(active_chat_rooms)
+            print("\n"+active_chat_rooms_users+"\n")
 
             # Get the user input
-            user_input = input()
+            user_input = input("Enter Choice : ")
 
             # Join a chat room
             if (user_input == "1"):
@@ -143,16 +141,13 @@ class Client:
                 self.client_socket.send(chat_room_name_message.encode())
 
                 server_message = self.client_socket.recv(1024).decode()
-                if (server_message == f"[System]: Chat room {self.chat_room_name} does not exist."):
-                    print("\n\n" + server_message + "\n\n")
+                if (server_message == f"[SYSTEM]: Chat room {self.chat_room_name} does not exist."):
+                    print( server_message )
                     self.client_socket.send("NO_INPUT 8f9e1d6c5b4a32".encode())
                     continue
                 else:
-                    print(
-                        "\n\n=============================================================")
-                    print(server_message)
-                    print(
-                        "=============================================================\n\n")
+          
+                    print("\n"+server_message+"\n")
                     print("=================================== \nWelcome to the Chat Room. Press \n1. to send a message \n2. to receive messages \n =========================== \n While sending messages, You have the following commands \n  1. /leave : to leave the chatroom \n  2. /logout : to logout and exit \n===================================\n\n")
 
                     while (1):
@@ -169,18 +164,16 @@ class Client:
                 self.client_socket.send(chat_room_name_message.encode())
 
                 server_message = self.client_socket.recv(1024).decode()
-                print(server_message)
-                if (server_message == f"[System]: Chat room {self.chat_room_name} does not exist."):
-                    print("\n\n[SYSTEM] : "+server_message + "\n\n")
+                print("\n"+server_message+"\n")
+                if (server_message == f"[SYSTEM]: Chat room {self.chat_room_name} does not exist."):
+                    print("\n"+server_message+"\n")
                     self.client_socket.send("NO_INPUT 8f9e1d6c5b4a32".encode())
                     continue
                 else:
-                    print(
-                        "=============================================================")
-                    print(server_message)
-                    print(
-                        "=============================================================")
-                    print("=================================== \nWelcome to the Chat Room. Press \n1. to send a message \n2. to receive messages \n =========================== \n While sending messages, You have the following commands \n  1. /leave : to leave the chatroom \n  2. /logout : to logout and exit \n===================================")
+                    
+                    print("\n"+server_message+"\n")
+                
+                    print("\n\n=================================== \nWelcome to the Chat Room. Press \n1. to send a message \n2. to receive messages \n =========================== \n While sending messages, You have the following commands \n  1. /leave : to leave the chatroom \n  2. /logout : to logout and exit \n===================================\n\n")
                     while (1):
 
                         x = self.handleChat()

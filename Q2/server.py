@@ -64,21 +64,16 @@ class ClientThread(threading.Thread):
         self.username = self.connection.recv(1024).decode()
         password = self.connection.recv(1024).decode()
 
-        print("Username: ", self.username)
-        print("Password: ", password)
-
         if self.username in USERS:
             if password == USERS[self.username]:
-                self.connection.send('Login successful!'.encode())
-                print('Login successful!')
+                self.connection.send('[SYSTEM] :Login successful!'.encode())
                 return 1
             else:
-                self.connection.send('Incorrect password!'.encode())
-                print('Incorrect password!')
+                self.connection.send(
+                    '[SYSTEM] :Incorrect password!'.encode())
                 return -1
 
         else:
-            print('User not registered!')
             self.connection.send('User not registered!'.encode())
             return -1
 
@@ -89,26 +84,23 @@ class ClientThread(threading.Thread):
         self.username = self.connection.recv(1024).decode()
 
         if self.username in USERS:
-            self.connection.send('Username already exists!'.encode())
-            print('Username already exists!')
+            self.connection.send('[SYSTEM] :Username already exists!'.encode())
             return -1
         else:
-            self.connection.send('Enter Password : '.encode())
+            self.connection.send('[SYSTEM] :Enter Password : '.encode())
 
             password = self.connection.recv(1024).decode()
             USERS[self.username] = password
-            self.connection.send('User registered successfully!'.encode())
-            print('User registered successfully!')
+            self.connection.send(
+                '[SYSTEM] :User registered successfully!'.encode())
+            print(f'{self.username} registered successfully!')
             return 1
 
     def handleAuth(self):
 
         while True:
 
-            print("Handling authentication...")
-
             method = self.connection.recv(1024).decode()
-            print(method)
             if method == 'login':
                 if (self.login() == 1):
                     break
@@ -121,14 +113,14 @@ class ClientThread(threading.Thread):
         ACTIVE_USERS[self.username] = self.connection
 
         # Send the list of active users to the client
-        self.connection.send('Active users: {}'.format(
-            list(ACTIVE_USERS.keys())).encode())
+        self.connection.send(
+            f'[SYSTEM]: Active users: {list(ACTIVE_USERS.keys())} \n'.encode())
 
     def join_chat_room(self, chat_room_name):
 
         if(CHAT_ROOMS==set()):
             self.connection.send(
-            f"[System]: Chat room {chat_room_name} does not exist.".encode())
+            f"[SYSTEM]: Chat room {chat_room_name} does not exist.".encode())
 
         else :
             for chat_room in CHAT_ROOMS:
@@ -140,19 +132,19 @@ class ClientThread(threading.Thread):
                     USERS_CHAT_ROOM[self.username] = chat_room_name
 
                     # Send a message to the chat room
-                    chat_room_message = f"[System][{datetime.datetime.now().strftime('%H:%M:%S')}]: {self.username} has joined the chat room."
+                    chat_room_message = f"[SYSTEM][{datetime.datetime.now().strftime('%H:%M:%S')}]: {self.username} has joined the chat room."
                     chat_room.send_message(
                         chat_room_message)
 
                     # Send a message to the client
                     self.connection.send(
-                        f"[System]: You have joined the chat room \"{chat_room_name}\"".encode())
+                        f"[SYSTEM]: You have joined the chat room \"{chat_room_name}\"".encode())
 
                 else:
 
                     # Send a message to the client
                     self.connection.send(
-                        f"[System]: Chat room {chat_room_name} does not exist.".encode())
+                        f"[SYSTEM]: Chat room {chat_room_name} does not exist.".encode())
 
     def create_chat_room(self, chat_room_name):
 
@@ -165,7 +157,7 @@ class ClientThread(threading.Thread):
 
                     # Send a message to the client
                     self.connection.send(
-                        f"[System]: Chat room {chat_room_name} already exists. Please join it.".encode())
+                        f"[SYSTEM]: Chat room {chat_room_name} already exists. Please join it.".encode())
                     return 
                 
         # Create a new chat room
@@ -178,7 +170,7 @@ class ClientThread(threading.Thread):
         USERS_CHAT_ROOM[self.username] = chat_room_name
 
         # Send a message to the chat room
-        chat_room_message = f"[System][{datetime.datetime.now().strftime('%H:%M:%S')}]: {self.username} has created the chat room."
+        chat_room_message = f"[SYSTEM][{datetime.datetime.now().strftime('%H:%M:%S')}]: {self.username} has created the chat room."
 
         f = open(chat_room_name+'.txt', 'w')
         f.close()
@@ -188,7 +180,7 @@ class ClientThread(threading.Thread):
 
         # Send a message to the client
         self.connection.send(
-            f"[System]: You have created the chat room \"{chat_room_name}\" ".encode())
+            f"[SYSTEM]: You have created the chat room \"{chat_room_name}\" ".encode())
             
 
     def leave_chat_room(self, chat_room):
@@ -198,12 +190,12 @@ class ClientThread(threading.Thread):
         USERS_CHAT_ROOM.pop(self.username)
 
         # Send a message to the chat room
-        chat_room_message = f"[System][{datetime.datetime.now().strftime('%H:%M:%S')}]: {self.username} has left the chat room."
+        chat_room_message = f"[SYSTEM][{datetime.datetime.now().strftime('%H:%M:%S')}]: {self.username} has left the chat room."
         chat_room.send_message(chat_room_message)
 
         # Send a message to the client
         self.connection.send(
-            f"[System]: You have left the chat room \"{chat_room.name}\".".encode())
+            f"[SYSTEM]: You have left the chat room \"{chat_room.name}\".".encode())
 
     def handle_user(self):
 
@@ -212,19 +204,16 @@ class ClientThread(threading.Thread):
             # Send list of chat rooms to the client
             chat_room_list = [chat_room.name for chat_room in CHAT_ROOMS]
             self.connection.send(
-                f"\n[System]: Chat rooms: {chat_room_list}".encode())
-            print("Chat rooms: ", chat_room_list)
+                f"[SYSTEM]: Chat rooms: {chat_room_list}\n".encode())
 
             # Receive the message from the client
             message = self.connection.recv(1024).decode()
-            print(message)
 
             # Check if the user wants to join a chat room
             if message.startswith('/join'):
 
                 # Get the chat room name
                 chat_room_name = message.split(" ")[1]
-                # print("[] :  chat_room : ",chat_room_name)
 
                 # Join the chat room
                 self.join_chat_room(chat_room_name)
@@ -261,7 +250,7 @@ class ClientThread(threading.Thread):
 
                 # Send a message to the client
                 self.connection.send(
-                    "[System]: Logged out successfully!".encode())
+                    "[SYSTEM]: Logged out successfully!".encode())
 
                 # Close the self.connection
                 self.connection.close()
@@ -272,13 +261,13 @@ class ClientThread(threading.Thread):
             else:
                 if (USERS_CHAT_ROOM[self.username] == None):
                     self.connection.send(
-                        "[System]: You are not in any chat room.".encode())
+                        "[SYSTEM]: You are not in any chat room.".encode())
 
                 else:
                     # Get the chat room name
                     chat_room_name = USERS_CHAT_ROOM[self.username]
 
-                    room_message = f"[System][{datetime.datetime.now().strftime('%H:%M:%S')}]: {self.username} : {message} "
+                    room_message = f"[SYSTEM][{datetime.datetime.now().strftime('%H:%M:%S')}]: {self.username} : {message} "
 
                     # Find the chat room
                     for chat_room in CHAT_ROOMS:
@@ -297,7 +286,6 @@ class ClientThread(threading.Thread):
 
         
         # Handle the user
-        print("Handling user")
         x = self.handle_user()
 
 
