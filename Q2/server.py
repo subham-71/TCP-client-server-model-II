@@ -258,8 +258,8 @@ class Server:
 
 if __name__ == '__main__':
 
-    server = Server()
 
     while (1):
+        server = Server()
         thread = threading.Thread(target=server.server_program())
         thread.start()

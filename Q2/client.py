@@ -1,6 +1,6 @@
 import socket
 import time
-
+import threading
 
 class Client:
     def __init__(self, file_path):
@@ -13,6 +13,52 @@ class Client:
     def client_socket_init(self):
         self.client_socket.connect((self.host, self.port_no))
 
+    def login(self):
+        self.client_socket.send("login".encode())
+
+        # Get the username from the user
+        username = input('Enter username: ')
+        self.client_socket.send(username.encode())
+
+        # Get the password from the user
+        password = input('Enter password: ')
+        self.client_socket.send(password.encode())
+
+        # Receive acknowledgement from the server
+        server_message = self.client_socket.recv(1024).decode()
+
+        if server_message == "Login successful!":
+            self.username = username
+            print("Login successful!")
+            return 1
+        else :
+            print(server_message)
+            return -1
+
+    def signup(self):
+        self.client_socket.send("signup".encode())
+
+        # Get the username from the user
+        username = input('Enter username: ')
+        self.client_socket.send(username.encode())
+
+        # Get server message
+        server_message = self.client_socket.recv(1024).decode()
+        if (server_message == "Username already exists!"):
+            print("Username already exists!")
+            return -1
+        else:
+            print("Username accepted!")
+            # Get the password from the user
+            password = input('Enter password: ')
+            self.client_socket.send(password.encode())
+
+            server_message = self.client_socket.recv(1024).decode()
+            if (server_message == "User registered successfully!"):
+                self.username = username
+                print("User registered successfully!")
+                return 1
+            
     def handleAuth(self):
         # Login or Signup
         print("=================================== \nWelcome to the Chat Room. Press \n1. to Login or \n2. to Signup \n3. Exit ===================================")
@@ -20,50 +66,10 @@ class Client:
         choice = input("Enter your choice: ")
 
         if choice == "1":
-            self.client_socket.send("login".encode())
-
-            # Get the username from the user
-            username = input('Enter username: ')
-            self.client_socket.send(username.encode())
-
-            # Get the password from the user
-            password = input('Enter password: ')
-            self.client_socket.send(password.encode())
-
-            # Receive acknowledgement from the server
-            server_message = self.client_socket.recv(1024).decode()
-
-            if server_message == "Login successful!":
-                self.username = username
-                print("Login successful!")
-                return 1
-            else :
-                print(server_message)
-                return -1
+            return self.login()
 
         elif choice == "2":
-            self.client_socket.send("signup".encode())
-
-            # Get the username from the user
-            username = input('Enter username: ')
-            self.client_socket.send(username.encode())
-
-            # Get server message
-            server_message = self.client_socket.recv(1024).decode()
-            if (server_message == "Username already exists!"):
-                print("Username already exists!")
-                return -1
-            else:
-                print("Username accepted!")
-                # Get the password from the user
-                password = input('Enter password: ')
-                self.client_socket.send(password.encode())
-
-                server_message = self.client_socket.recv(1024).decode()
-                if (server_message == "User registered successfully!"):
-                    self.username = username
-                    print("User registered successfully!")
-                    return 1
+            return self.signup()
 
         elif choice == "3":
             self.client_socket.close()
@@ -73,14 +79,13 @@ class Client:
             return -1
     
     def receive_messages(self):
-        while True:
-            try:
-                message = self.client_socket.recv(1024).decode()
-                print(message)
-            except OSError:
-                break
+
+        message = self.client_socket.recv(1024).decode()
+        print(message)
+     
                 
     def send_message(self):
+
         print(f"{self.username}: ")
         user_input = input()
         if (user_input == "/leave"):
@@ -101,11 +106,12 @@ class Client:
 
     def handleChat(self):
 
-        # Receive messages continuously from server and display them
+        # Multi-threading to send and receive messages
+        receive_thread = threading.Thread(target=self.receive_messages)
+        send_thread = threading.Thread(target=self.send_message)
 
-        # server_message = self.client_socket.recv(1024).decode()
-        # print(server_message)
-
+        receive_thread.start()
+        send_thread.start()
         
 
     def handleChatRoom(self):
@@ -161,8 +167,15 @@ class Client:
                         x = self.handleChat()
                         if(x == -1):
                             break
+            
+            # Logout
+            elif (user_input == "3"):
+                print("Logging out...")
+                break
 
-
+            else:
+                print("Invalid choice")
+                continue
 
     def client_program(self):
 
@@ -179,17 +192,13 @@ class Client:
             elif x == 2:
                 break
             else:
+                self.handleChatRoom()
                 
-
-
-
-
-
 
         self.client_socket.close()
 
 
 if __name__ == "__main__":
-
-    client = Client("server.py")
-    client.send_file()
+    client = Client()
+    client.client_program()
+    
