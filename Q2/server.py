@@ -1,7 +1,11 @@
 import socket
 import datetime
+import time
+import threading
 
 # Class to represent a chat room
+
+
 class ChatRoom:
     def __init__(self, name, creator):
         self.name = name
@@ -14,7 +18,7 @@ class ChatRoom:
     def remove_user(self, user):
         self.users.remove(user)
 
-    def send_message(self, message,active_users):
+    def send_message(self, message, active_users):
         for user in self.users:
             self.active_users[user].send(message.encode())
 
@@ -25,7 +29,6 @@ class Server:
         self.host = socket.gethostname()
         self.port_no = 8000
         self.connection = socket.socket()
-        self.filename = "received_by_server.txt"
         self.users = {}
         self.chat_rooms = set()
         self.active_users = {}
@@ -43,10 +46,13 @@ class Server:
 
     def login(self):
         username = self.connection.recv(1024).decode()
+        time.sleep(1)
+        password = self.connection.recv(1024).decode()
+        time.sleep(1)
 
         if username in self.users:
-            password = self.connection.recv(1024).decode()
             if password == self.users[username]:
+                self.connection.send('Login successful!'.encode())
                 return username
             else:
                 self.connection.send('Incorrect password!'.encode())
@@ -58,12 +64,13 @@ class Server:
     def signup(self):
 
         username = self.connection.recv(1024).decode()
+        time.sleep(1)
 
         if username in self.users:
-            self.connection.send('User already registered!'.encode())
+            self.connection.send('Username already exists!'.encode())
             return
         else:
-            password = self.connection.recv(1024).decode()
+            self.connection.send('Enter Password : '.encode())
 
             password = self.connection.recv(1024).decode()
             self.users[username] = password
@@ -73,7 +80,8 @@ class Server:
     def handleAuth(self):
 
         method = self.connection.recv(1024).decode()
-        
+        time.sleep(5)
+
         username = ''
         if method == 'login':
             username = self.login()
@@ -101,10 +109,12 @@ class Server:
 
                 # Send a message to the chat room
                 chat_room_message = f"[System][{datetime.datetime.now().strftime('%H:%M:%S')}]: {username} has joined the chat room."
-                chat_room.send_message(chat_room_message.encode() ,self.active_users)
+                chat_room.send_message(
+                    chat_room_message.encode(), self.active_users)
 
                 # Send a message to the client
-                self.connection.send(f"[System]: You have joined the chat room \"{chat_room_name}\"".encode())
+                self.connection.send(
+                    f"[System]: You have joined the chat room \"{chat_room_name}\"".encode())
 
             else:
 
@@ -136,7 +146,8 @@ class Server:
                 # Send a message to the chat room
                 chat_room_message = f"[System][{datetime.datetime.now().strftime('%H:%M:%S')}]: {username} has created the chat room."
 
-                chat_room.send_message(chat_room_message.encode() ,self.active_users)
+                chat_room.send_message(
+                    chat_room_message.encode(), self.active_users)
 
                 # Send a message to the client
                 self.connection.send(
@@ -150,7 +161,7 @@ class Server:
 
         # Send a message to the chat room
         chat_room_message = f"[System][{datetime.datetime.now().strftime('%H:%M:%S')}]: {username} has left the chat room."
-        chat_room.send_message(chat_room_message.encode(),self.active_users)
+        chat_room.send_message(chat_room_message.encode(), self.active_users)
 
         # Send a message to the client
         self.connection.send(
@@ -158,47 +169,73 @@ class Server:
 
     def handle_user(self, username):
 
-        # Receive the message from the client
-        message = self.connection.recv(1024).decode()
+        while (1):
 
-        # Check if the user wants to join a chat room
-        if message.startswith('/join'):
+            # Receive the message from the client
+            message = self.connection.recv(1024).decode()
 
-            # Get the chat room name
-            chat_room_name = message.split(" ")[1]
+            # Check if the user wants to join a chat room
+            if message.startswith('/join'):
 
-            # Join the chat room
-            self.join_chat_room(username, chat_room_name)
+                # Get the chat room name
+                chat_room_name = message.split(" ")[1]
 
-        # Check if the user wants to join a chat room
-        elif message.startswith('/create'):
+                # Join the chat room
+                self.join_chat_room(username, chat_room_name)
 
-            # Get the chat room name
-            chat_room_name = message.split(" ")[1]
+            # Check if the user wants to join a chat room
+            elif message.startswith('/create'):
 
-            # Join the chat room
-            self.create_chat_room(username, chat_room_name)
+                # Get the chat room name
+                chat_room_name = message.split(" ")[1]
 
-        # Check if the user wants to leave a chat room
-        elif message.startswith('/leave'):
+                # Join the chat room
+                self.create_chat_room(username, chat_room_name)
 
-            chat_room_name = self.users_chat_room[username]
+            # Check if the user wants to leave a chat room
+            elif message.startswith('/leave'):
 
-            # Find the chat room
-            for chat_room in self.chat_rooms:
-                if chat_room.name == chat_room_name:
-                    self.leave_chat_room(username, chat_room)
+                chat_room_name = self.users_chat_room[username]
 
-        else :
-            # Get the chat room name
-            chat_room_name = self.users_chat_room[username]
+                # Find the chat room
+                for chat_room in self.chat_rooms:
+                    if chat_room.name == chat_room_name:
+                        self.leave_chat_room(username, chat_room)
 
-            # Find the chat room
-            for chat_room in self.chat_rooms:
-                if chat_room.name == chat_room_name:
+            elif message.startswith('/logout'):
+                chat_room_name = self.users_chat_room[username]
 
-                    # Send the message to the chat room
-                    chat_room.send_message(message.encode(),self.active_users)
+                # Find the chat room
+                for chat_room in self.chat_rooms:
+                    if chat_room.name == chat_room_name:
+                        self.leave_chat_room(username, chat_room)
+
+                # Remove the user from the active users
+                self.active_users.pop(username)
+
+                # Send a message to the client
+                self.connection.send("[System]: Logged out successfully!".encode())
+
+                # Close the connection
+                self.connection.close()
+                return
+
+            else:
+                if (self.users_chat_room[username] == None):
+                    self.connection.send(
+                        "[System]: You are not in any chat room.".encode())
+
+                else:
+                    # Get the chat room name
+                    chat_room_name = self.users_chat_room[username]
+
+                    # Find the chat room
+                    for chat_room in self.chat_rooms:
+                        if chat_room.name == chat_room_name:
+
+                            # Send the message to the chat room
+                            chat_room.send_message(
+                                message.encode(), self.active_users)
 
     def server_program(self):
 
@@ -209,7 +246,9 @@ class Server:
         username = self.handleAuth()
 
         # Send list of chat rooms to the client
-        self.connection.send(f"[System]: Chat rooms: {list(self.chat_rooms)}".encode())
+        chat_room_list = [chat_room.name for chat_room in self.chat_rooms]
+        self.connection.send(
+            f"[System]: Chat rooms: {chat_room_list}".encode())
 
         # Handle the user
         self.handle_user(username)
@@ -220,4 +259,7 @@ class Server:
 if __name__ == '__main__':
 
     server = Server()
-    server.receive_file()
+
+    while (1):
+        thread = threading.Thread(target=server.server_program())
+        thread.start()
