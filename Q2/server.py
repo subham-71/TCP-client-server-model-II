@@ -1,7 +1,11 @@
 import socket
+import threading
 import datetime
 import time
 import threading
+
+HOST = "127.0.0.1"
+PORT = 8080
 
 # Class to represent a chat room
 
@@ -23,40 +27,36 @@ class ChatRoom:
             self.active_users[user].send(message.encode())
 
 
-class Server:
-    def __init__(self):
-        self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.host = socket.gethostname()
-        self.port_no = 8000
-        self.connection = socket.socket()
+class ClientThread(threading.Thread):
+
+    def __init__(self, address, connection):
+
+        threading.Thread.__init__(self)
+
+        self.connection = connection
+        self.address = address
+
+        print("New connection added: ", address)
+
         self.users = {}
         self.chat_rooms = set()
         self.active_users = {}
         self.users_chat_room = {}
 
-    def server_socket_init(self):
-        self.server_socket.bind((self.host, self.port_no))
-
-    def server_listen(self):
-        self.server_socket.listen(2)
-        print(
-            f"\n \n =========================== \n Server listening on port {self.port_no} \n =========================== \n")
-        self.connection, address = self.server_socket.accept()
-        print("Connection from: ", str(address))
-
     def login(self):
         username = self.connection.recv(1024).decode()
-        time.sleep(1)
         password = self.connection.recv(1024).decode()
-        time.sleep(1)
 
         if username in self.users:
             if password == self.users[username]:
                 self.connection.send('Login successful!'.encode())
+                print('Login successful!')
                 return username
             else:
                 self.connection.send('Incorrect password!'.encode())
+                print('Incorrect password!')
         else:
+            print('User not registered!')
             self.connection.send('User not registered!'.encode())
 
         return False
@@ -64,10 +64,10 @@ class Server:
     def signup(self):
 
         username = self.connection.recv(1024).decode()
-        time.sleep(1)
 
         if username in self.users:
             self.connection.send('Username already exists!'.encode())
+            print('Username already exists!')
             return
         else:
             self.connection.send('Enter Password : '.encode())
@@ -75,11 +75,13 @@ class Server:
             password = self.connection.recv(1024).decode()
             self.users[username] = password
             self.connection.send('User registered successfully!'.encode())
+            print('User registered successfully!')
             return username
 
     def handleAuth(self):
 
         method = self.connection.recv(1024).decode()
+        print(method)
         time.sleep(5)
 
         username = ''
@@ -214,11 +216,12 @@ class Server:
                 self.active_users.pop(username)
 
                 # Send a message to the client
-                self.connection.send("[System]: Logged out successfully!".encode())
+                self.connection.send(
+                    "[System]: Logged out successfully!".encode())
 
-                # Close the connection
+                # Close the self.connection
                 self.connection.close()
-                return
+                return -1
 
             else:
                 if (self.users_chat_room[username] == None):
@@ -237,29 +240,43 @@ class Server:
                             chat_room.send_message(
                                 message.encode(), self.active_users)
 
-    def server_program(self):
-
-        self.server_socket_init()
-        self.server_listen()
+    def handle_client(self):
 
         # Get username
+        print("Handling Auth")
         username = self.handleAuth()
 
         # Send list of chat rooms to the client
         chat_room_list = [chat_room.name for chat_room in self.chat_rooms]
         self.connection.send(
             f"[System]: Chat rooms: {chat_room_list}".encode())
+        print("Chat rooms: ", chat_room_list)
 
         # Handle the user
-        self.handle_user(username)
+        print("Handling user")
+        x = self.handle_user(username)
+        if (x == -1):
+            # self.connection.close()
+            return -1
 
-        self.connection.close()
+    def run(self):
+        print("Connection from : ", self.address)
+        while True:
+            if (self.handle_client() == -1):
+                break
+        print("Client at ", self.address, " disconnected...")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    server.bind((HOST, PORT))
+    print("Server started on port : ", PORT)
+    print("Waiting for client request..")
 
-    while (1):
-        server = Server()
-        thread = threading.Thread(target=server.server_program())
-        thread.start()
+    while True:
+        server.listen(1)
+        clientsock, clientAddress = server.accept()
+        newthread = ClientThread(clientAddress, clientsock)
+        newthread.start()

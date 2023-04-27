@@ -1,17 +1,15 @@
 import socket
-import time
 import threading
 
+SERVER = "127.0.0.1"
+PORT = 8080
+
+
 class Client:
-    def __init__(self, file_path):
+    def __init__(self, client_socket):
 
-        self.host = socket.gethostname()
-        self.port_no = 8000
-        self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.client_socket = client_socket
         self.username = ""
-
-    def client_socket_init(self):
-        self.client_socket.connect((self.host, self.port_no))
 
     def login(self):
         self.client_socket.send("login".encode())
@@ -31,7 +29,7 @@ class Client:
             self.username = username
             print("Login successful!")
             return 1
-        else :
+        else:
             print(server_message)
             return -1
 
@@ -58,10 +56,10 @@ class Client:
                 self.username = username
                 print("User registered successfully!")
                 return 1
-            
+
     def handleAuth(self):
         # Login or Signup
-        print("=================================== \nWelcome to the Chat Room. Press \n1. to Login or \n2. to Signup \n3. Exit ===================================")
+        print("=================================== \nWelcome to the Chat Room. Press \n1. to Login or \n2. to Signup \n3. Exit \n===================================")
 
         choice = input("Enter your choice: ")
 
@@ -77,13 +75,12 @@ class Client:
         else:
             print("Invalid choice")
             return -1
-    
+
     def receive_messages(self):
 
         message = self.client_socket.recv(1024).decode()
         print(message)
-     
-                
+
     def send_message(self):
 
         print(f"{self.username}: ")
@@ -100,7 +97,7 @@ class Client:
             if (server_message == "[System]: You are not in any chat room."):
                 print(server_message)
                 return -1
-            else :
+            else:
                 print(server_message)
                 return 1
 
@@ -112,12 +109,11 @@ class Client:
 
         receive_thread.start()
         send_thread.start()
-        
 
     def handleChatRoom(self):
-        while(1) : 
+        while (1):
             # Rules
-            print("=================================== \nWelcome to the Chat Room. Press \n1. Join a chat room \n2. Create a chat room \n3. Logout \n \n Once joined in a chatroom, you have the following commands : \n 1. /leave : to leave the chatroom 2. /logout : to logout and exit \n===================================")
+            print("=================================== \nWelcome to the Chat Room. Press \n1. Join a chat room \n2. Create a chat room \n3. Logout \n======================= \n \n Once joined in a chatroom, you have the following commands : \n  1. /leave : to leave the chatroom \n   2. /logout : to logout and exit \n===================================")
 
             # Receive list of active chat rooms from server
             active_chat_rooms = self.client_socket.recv(1024).decode()
@@ -125,27 +121,30 @@ class Client:
             # Print the list of active chat rooms
             print(active_chat_rooms)
 
-            # Get the user input    
+            # Get the user input
             user_input = input()
 
             # Join a chat room
             if (user_input == "1"):
-                
+
                 chat_room_name = input("Enter chat room name: ")
                 chat_room_name = "/join " + chat_room_name
                 self.client_socket.send(chat_room_name.encode())
 
                 server_message = self.client_socket.recv(1024).decode()
+                print(server_message)
                 if (server_message == f"[System]: Chat room {chat_room_name} does not exist."):
                     print(server_message)
                     continue
-                else :
-                    print("=============================================================")
+                else:
+                    print(
+                        "=============================================================")
                     print(server_message)
-                    print("=============================================================")
-                    while(1):
+                    print(
+                        "=============================================================")
+                    while (1):
                         x = self.handleChat()
-                        if(x == -1):
+                        if (x == -1):
                             break
 
             # Create a chat room
@@ -159,15 +158,17 @@ class Client:
                 if (server_message == f"[System]: Chat room {chat_room_name} does not exist."):
                     print(server_message)
                     continue
-                else :
-                    print("=============================================================")
+                else:
+                    print(
+                        "=============================================================")
                     print(server_message)
-                    print("=============================================================")
-                    while(1):
+                    print(
+                        "=============================================================")
+                    while (1):
                         x = self.handleChat()
-                        if(x == -1):
+                        if (x == -1):
                             break
-            
+
             # Logout
             elif (user_input == "3"):
                 print("Logging out...")
@@ -181,10 +182,6 @@ class Client:
 
         while (1):
 
-            self.client_socket_init()
-
-            # Login or Signup
-
             x = self.handleAuth()
 
             if x == -1:
@@ -193,12 +190,14 @@ class Client:
                 break
             else:
                 self.handleChatRoom()
-                
 
         self.client_socket.close()
 
 
-if __name__ == "__main__":
-    client = Client()
+if __name__ == '__main__':
+
+    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client_socket.connect((SERVER, PORT))
+
+    client = Client(client_socket)
     client.client_program()
-    
