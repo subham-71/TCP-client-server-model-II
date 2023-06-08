@@ -35,5 +35,6 @@ class Client:
 
 if __name__ == "__main__":
 
-    client = Client("client_file.txt")
+    path = input("Enter absolute path of file to be sent: ")
+    client = Client(path)
     client.send_file()

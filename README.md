@@ -4,7 +4,9 @@
 
 Run server : python server.py \
 Run client : python client.py \
-Specify the filename here to send a file to the server :
+
+![image](https://github.com/subham-71/TCP-client-server-model-II/assets/72215169/bf45558c-076f-436a-a2a5-2ef72fdfd381)
+
 
 # Task-2 : Chat Application
 
